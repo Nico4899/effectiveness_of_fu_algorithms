@@ -1,0 +1,23 @@
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+env/
+
+# Data directories
+data/
+
+# Logs
+*.log
+
+# Temporary workspaces
+/pfs/work9/
+/work/workspace/
+/tmp/
+/scratch/
+
+# Editor settings
+.vscode/
+.idea/
