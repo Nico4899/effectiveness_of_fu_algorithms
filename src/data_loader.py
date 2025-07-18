@@ -167,6 +167,92 @@ def split_train_test(
     return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
 
 
+def partition_data(
+    X: np.ndarray,
+    y: np.ndarray,
+    dirichlet_alpha: float,
+    num_clients: int = 10,
+    seed: int | None = 0,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Partition data among ``num_clients`` using a Dirichlet distribution.
+
+    Each class label's samples are distributed to the clients according to
+    probabilities drawn from :class:`numpy.random.Generator.dirichlet` with
+    parameter ``dirichlet_alpha``.  The returned list contains ``num_clients``
+    tuples ``(X_i, y_i)`` representing the dataset for client ``i``.
+
+    Parameters
+    ----------
+    X:
+        Feature matrix of the *training* portion of the dataset.
+    y:
+        Labels corresponding to ``X``.
+    dirichlet_alpha:
+        Concentration parameter for the Dirichlet distribution.  Smaller
+        values yield more uneven label distributions across clients.
+    num_clients:
+        Number of client datasets to create.
+    seed:
+        Optional random seed for reproducibility.
+
+    Returns
+    -------
+    list[tuple[np.ndarray, np.ndarray]]
+        ``[(X_0, y_0), (X_1, y_1), ...]`` containing the partitioned data.
+    """
+
+    if dirichlet_alpha <= 0:
+        raise ValueError("dirichlet_alpha must be > 0")
+    if num_clients <= 0:
+        raise ValueError("num_clients must be > 0")
+
+    rng = np.random.default_rng(seed)
+    client_indices = [[] for _ in range(num_clients)]
+
+    classes = np.unique(y)
+    for c in classes:
+        class_idx = np.where(y == c)[0]
+        rng.shuffle(class_idx)
+
+        proportions = rng.dirichlet(np.full(num_clients, dirichlet_alpha))
+        n_per_client = (proportions * len(class_idx)).astype(int)
+
+        # Distribute any rounding remainder
+        remainder = len(class_idx) - n_per_client.sum()
+        if remainder > 0:
+            extra_clients = rng.choice(num_clients, size=remainder, p=proportions)
+            for client_id in extra_clients:
+                n_per_client[client_id] += 1
+
+        start = 0
+        for client_id, n in enumerate(n_per_client):
+            if n > 0:
+                client_indices[client_id].extend(class_idx[start : start + n])
+            start += n
+
+    partitions = []
+    for indices in client_indices:
+        idx_array = np.array(indices, dtype=int)
+        partitions.append((X[idx_array], y[idx_array]))
+    return partitions
+
+
+def save_partitions(
+    partitions: list[tuple[np.ndarray, np.ndarray]],
+    root_dir: str = "data/clients",
+) -> None:
+    """Persist client datasets to ``root_dir`` in ``.npz`` format."""
+
+    os.makedirs(root_dir, exist_ok=True)
+    for i, (X_i, y_i) in enumerate(partitions):
+        path = os.path.join(root_dir, f"client_{i}.npz")
+        np.savez(path, X=X_i, y=y_i)
+
+
 if __name__ == "__main__":
     X, y = load_texas100()
     print("Loaded Texas-100:", X.shape, y.shape)
+
+    partitions = partition_data(X, y, dirichlet_alpha=1.0, num_clients=10)
+    save_partitions(partitions)
+    print("Saved example client partitions to data/clients")
