@@ -2,8 +2,8 @@
 #SBATCH --job-name=fl_cpu
 #SBATCH --partition=cpu
 #SBATCH --nodes=1
-#SBATCH --nodes=11
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks=11
+#SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
 #SBATCH --output=logs/fl_cpu_%j.out
 #SBATCH --error=logs/fl_cpu_%j.err
