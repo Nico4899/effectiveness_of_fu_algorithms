@@ -9,9 +9,9 @@
       - scikit-learn
       - matplotlib
   tasks:
-    - name: Ensure python-venv is installed
+    - name: Ensure venv is installed
       package:
-        name: python-venv
+        name: venv
         state: present
 
     - name: Create virtual environment
