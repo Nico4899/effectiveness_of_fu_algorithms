@@ -90,6 +90,83 @@ def load_texas100(root_dir: str = "data", download: bool = True) -> Tuple[np.nda
     return X, y
 
 
+def sample_records(
+    X: np.ndarray,
+    y: np.ndarray,
+    n_samples: int = 30_000,
+    seed: int | None = 0,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Randomly sample a subset of the dataset.
+
+    Parameters
+    ----------
+    X:
+        Feature matrix of shape ``(N, d)``.
+    y:
+        Array of labels of shape ``(N,)``.
+    n_samples:
+        Number of samples to draw from the dataset.
+    seed:
+        Seed for the random generator to ensure reproducibility. ``None``
+        uses NumPy's global generator state.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        ``(X_subset, y_subset)`` containing ``n_samples`` randomly selected
+        entries from ``X`` and ``y``.
+    """
+
+    if n_samples > len(X):
+        raise ValueError(
+            "Requested more samples than are available in the dataset"
+        )
+
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(len(X), size=n_samples, replace=False)
+    return X[idx], y[idx]
+
+
+def split_train_test(
+    X: np.ndarray,
+    y: np.ndarray,
+    test_size: float = 0.2,
+    seed: int | None = 0,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Split a dataset into train and test portions.
+
+    Parameters
+    ----------
+    X:
+        Feature matrix.
+    y:
+        Labels corresponding to ``X``.
+    test_size:
+        Fraction of the dataset to allocate to the test set.
+    seed:
+        Seed for the random generator to ensure reproducible shuffling.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        ``(X_train, X_test, y_train, y_test)`` split according to
+        ``test_size``.
+    """
+
+    if not 0.0 < test_size < 1.0:
+        raise ValueError("test_size must be in the interval (0, 1)")
+
+    rng = np.random.default_rng(seed)
+    indices = np.arange(len(X))
+    rng.shuffle(indices)
+
+    n_test = int(round(len(X) * test_size))
+    test_idx = indices[:n_test]
+    train_idx = indices[n_test:]
+
+    return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
+
+
 if __name__ == "__main__":
     X, y = load_texas100()
     print("Loaded Texas-100:", X.shape, y.shape)

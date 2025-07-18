@@ -9,7 +9,7 @@
 #SBATCH --error=logs/fl_cpu_%j.err
 
 module load Python/3.8
-source ~/venv/Scripts/activate
+source ~/venv/bin/activate
 
 # Launch 1 server (PROCID=0) and 10 clients
 srun --ntasks=11 python src/runner.py --role=$( [ $SLURM_PROCID -eq 0 ] && echo server || echo client )

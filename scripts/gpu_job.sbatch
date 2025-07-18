@@ -10,7 +10,7 @@
 
 module load cuda
 module load Python/3.8
-source ~/venv/Scripts/activate
+source ~/venv/bin/activate
 
 # One server and three clients share GPUs
 srun python src/runner.py --role=$( [ $SLURM_PROCID -eq 0 ] && echo server || echo client )
