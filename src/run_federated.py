@@ -2,7 +2,7 @@ import argparse
 import os
 import numpy as np
 import flwr as fl
-
+from logging_strategy import LoggingFedAvg
 from model import create_model
 from fl_client import TexasClient
 
@@ -25,10 +25,11 @@ def fit_config(server_round: int):
     return {"server_round": server_round}
 
 
-def start_server(address: str):
+def start_server(address: str, log_dir: str = "logs/client_updates"):
     data = np.load(os.path.join("data", "texas100_subset.npz"))
     evaluate_fn = evaluate_fn_factory(data["X_test"], data["y_test"])
-    strategy = fl.server.strategy.FedAvg(
+    strategy = LoggingFedAvg(
+        log_dir = log_dir,
         fraction_fit=1.0,
         fraction_evaluate=1.0,
         min_fit_clients=10,
@@ -51,9 +52,10 @@ if __name__ == "__main__":
     parser.add_argument("--cid", type=int, default=0, help="Client id")
     parser.add_argument("--address", default="0.0.0.0:8080", help="Server address")
     parser.add_argument("--data-dir", default="data/clients", help="Client data directory")
+    parser.add_argument("--log-dir", default="logs/client_updates", help="Directory to store per-client updates")
     args = parser.parse_args()
 
     if args.role == "server":
-        start_server(args.address)
+        start_server(args.address, log_dir=args.log_dir)
     else:
         start_client(args.address, args.cid, args.data_dir)
