@@ -53,7 +53,7 @@ def create_model() -> tf.keras.Model:
     )(x)
     x = layers.Dropout(0.5)(x)
     outputs = layers.Dense(
-        num_classes,
+        100,
         activation="softmax",
         kernel_initializer="he_normal",
         kernel_regularizer=l2,
