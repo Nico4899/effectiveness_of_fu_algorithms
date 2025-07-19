@@ -28,7 +28,7 @@ def create_model() -> tf.keras.Model:
     l2 = regularizers.l2(1e-4)
 
     # Define inputs
-    inputs = layers.Input(shape=(6169,), name="input_features")
+    inputs = layers.Input(shape=(6170,), name="input_features")
 
     # Define layers
     x = layers.Dense(
