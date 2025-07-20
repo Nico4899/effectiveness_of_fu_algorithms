@@ -41,7 +41,7 @@ class TexasClient(fl.client.NumPyClient):
         self.model.compile(optimizer=optimizer, loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["accuracy"])
 
         self.model.fit(self.x_train, self.y_train, batch_size=64, epochs=10, verbose=0)
-        return self.model.get_weights(), len(self.x_train), {}
+        return self.model.get_weights(), len(self.x_train), {"cid": self.client_id}
 
     def evaluate(self, parameters, config):
         self.model.set_weights(parameters)
