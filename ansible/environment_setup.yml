@@ -1,0 +1,27 @@
+- hosts: all
+  become: yes
+  vars:
+    venv_path: "{{ ansible_env.HOME }}/venv"
+    pip_packages:
+      - flwr[simulation]
+      - tensorflow
+      - numpy
+      - scikit-learn
+      - matplotlib
+  tasks:
+    - name: Ensure venv is installed
+      package:
+        name: venv
+        state: present
+
+    - name: Create virtual environment
+      command: python -m venv {{ venv_path }}
+      args:
+        creates: "{{ venv_path }}/bin/activate"
+
+    - name: Install pip packages in virtualenv
+      ansible.builtin.pip:
+        name: "{{ pip_packages }}"
+        virtualenv: "{{ venv_path }}"
+        virtualenv_python: python
+        state: present
