@@ -50,7 +50,7 @@ def download_texas100(root_dir: str = "data") -> Tuple[str, str]:
     # Extract only the 100-class version
     with tarfile.open(tar_path, "r:gz") as tar:
         members = [m for m in tar.getmembers() if m.name.startswith("texas/100/")]
-        tar.extractall(path=root_dir, members=members, filter=lambda tarinfo: tarinfo)
+        tar.extractall(path=root_dir, members=members, filter=lambda tarinfo, _: tarinfo)
 
     feats_path = os.path.join(root_dir, "texas", "100", "feats")
     labels_path = os.path.join(root_dir, "texas", "100", "labels")
