@@ -8,7 +8,7 @@
 #SBATCH --output=logs/fl_cpu_%j.out
 #SBATCH --error=logs/fl_cpu_%j.err
 
-module load Python/3.11.1
+module load devel/python/3.11.7-gnu-11.4
 source ~/venv/bin/activate
 
 # Launch 1 server (PROCID=0) and 10 clients

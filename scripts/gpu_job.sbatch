@@ -8,8 +8,8 @@
 #SBATCH --output=logs/fl_gpu_%j.out
 #SBATCH --error=logs/fl_gpu_%j.err
 
-module load cuda
-module load Python/3.11.1
+module load devel/cuda/12.8   
+module load devel/python/3.11.7-gnu-11.4
 source ~/venv/bin/activate
 
 # One server and three clients share GPUs
