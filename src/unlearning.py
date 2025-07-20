@@ -13,24 +13,7 @@ import numpy as np
 import tensorflow as tf
 
 from model import create_model
-
-
-def _flatten_weights(weights: List[np.ndarray]) -> Tuple[np.ndarray, List[tuple]]:
-    """Flatten a list of weight arrays into a single vector."""
-    shapes = [w.shape for w in weights]
-    flat = np.concatenate([w.ravel() for w in weights])
-    return flat, shapes
-
-
-def _unflatten_weights(flat: np.ndarray, shapes: List[tuple]) -> List[np.ndarray]:
-    """Inverse of :func:`_flatten_weights`."""
-    weights = []
-    offset = 0
-    for shape in shapes:
-        size = int(np.prod(shape))
-        weights.append(flat[offset : offset + size].reshape(shape))
-        offset += size
-    return weights
+from utils import flatten_weights, unflatten_weights
 
 
 def _compute_gradient(model: tf.keras.Model, x: np.ndarray, y: np.ndarray) -> List[np.ndarray]:
@@ -72,7 +55,7 @@ def apply_SFU(
     """
     # Save original weights
     original_weights = [w.numpy() for w in global_model.trainable_variables]
-    original_flat, shapes = _flatten_weights(original_weights)
+    original_flat, shapes = flatten_weights(original_weights)
 
     # ----- Target gradient ascent -----
     target_model = create_model()
@@ -94,7 +77,7 @@ def apply_SFU(
     target_update = [nw - ow for nw, ow in zip(target_weights, original_weights)]
 
     # Flatten target update for projection
-    g_t, shapes = _flatten_weights(target_update)
+    g_t, shapes = flatten_weights(target_update)
 
     # ----- Gather representation from remaining clients -----
     subspace_vectors = []
@@ -102,7 +85,7 @@ def apply_SFU(
         rep_model = create_model()
         rep_model.set_weights(original_weights)
         grads = _compute_gradient(rep_model, x_i, y_i)
-        g_vec, _ = _flatten_weights(grads)
+        g_vec, _ = flatten_weights(grads)
         subspace_vectors.append(g_vec)
 
     if subspace_vectors:
@@ -113,7 +96,7 @@ def apply_SFU(
     else:
         g_t_perp = g_t
 
-    new_weights = _unflatten_weights(g_t_perp + original_flat, shapes)
+    new_weights = unflatten_weights(g_t_perp + original_flat, shapes)
     global_model.set_weights(new_weights)
     return new_weights
 
@@ -172,4 +155,3 @@ def retrain_without_client(
 
     model.set_weights(weights)
     return model
-    

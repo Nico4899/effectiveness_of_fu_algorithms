@@ -7,6 +7,7 @@ from typing import Iterable, List, Tuple
 import numpy as np
 import tensorflow as tf
 
+from utils import flatten_weights
 
 
 def compute_gradient_sum(model: tf.keras.Model, x: np.ndarray, num_classes: int = 100) -> List[np.ndarray]:
@@ -37,12 +38,6 @@ def compute_gradient_sum(model: tf.keras.Model, x: np.ndarray, num_classes: int 
         for i, g in enumerate(grads):
             grads_sum[i] += g.numpy()
     return grads_sum
-
-
-def flatten_weights(weights: List[np.ndarray]) -> Tuple[np.ndarray, List[tuple]]:
-    shapes = [w.shape for w in weights]
-    flat = np.concatenate([w.ravel() for w in weights])
-    return flat, shapes
 
 
 def norm_difference(update: List[np.ndarray], candidate_grad: List[np.ndarray]) -> float:

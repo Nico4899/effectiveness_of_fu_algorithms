@@ -4,7 +4,7 @@
     venv_path: "{{ ansible_env.HOME }}/venv"
     pip_packages:
       - flwr[simulation]
-      - tensorflow>=2.5,<3.0
+      - tensorflow
       - numpy
       - scikit-learn
       - matplotlib
