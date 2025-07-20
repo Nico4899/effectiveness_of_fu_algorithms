@@ -123,17 +123,54 @@ def retrain_without_client(
     partitions: List[Tuple[np.ndarray, np.ndarray]],
     target_id: int,
     rounds: int = 100,
-    address: str = "0.0.0.0:8080",
-) -> None:
-    """Retrain a model from scratch excluding ``target_id``."""
-    remaining = [(x, y) for i, (x, y) in enumerate(partitions) if i != target_id]
+    *,
+    C: float = 1.0,
+    seed: int = 0,
+) -> tf.keras.Model:
+    """Retrain a model from scratch excluding ``target_id``.
 
-    # Setup Flower server
-    strategy = fl.server.strategy.FedAvg(
-        fraction_fit=1.0,
-        fraction_evaluate=1.0,
-        min_fit_clients=len(remaining),
-        min_evaluate_clients=len(remaining),
-        min_available_clients=len(remaining),
-    )
-    fl.server.start_server(server_address=address, config={"num_rounds": rounds}, strategy=strategy)
+    The function performs a simple synchronous Federated Averaging loop
+    similar to :func:`experiment_runner.federated_train` but omits the
+    dataset of the client identified by ``target_id``.  The returned model
+    is freshly trained on the remaining partitions for ``rounds``
+    communication rounds.
+    """
+
+    remaining = [d for i, d in enumerate(partitions) if i != target_id]
+
+    rng = np.random.default_rng(seed)
+    num_clients = len(remaining)
+
+    model = create_model()
+    weights = model.get_weights()
+
+    for _ in range(rounds):
+        m = max(1, int(C * num_clients))
+        selected = rng.choice(num_clients, size=m, replace=False)
+
+        updates = []
+        num_samples = []
+
+        for cid in selected:
+            x, y = remaining[cid]
+            client_model = create_model()
+            client_model.set_weights(weights)
+            client_model.compile(
+                optimizer=tf.keras.optimizers.SGD(learning_rate=5e-3, momentum=0.9),
+                loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+            )
+            client_model.fit(x, y, batch_size=64, epochs=1, verbose=0)
+            updates.append(client_model.get_weights())
+            num_samples.append(len(x))
+
+        new_weights = [np.zeros_like(w) for w in weights]
+        total = sum(num_samples)
+        for upd, n in zip(updates, num_samples):
+            for i, w in enumerate(upd):
+                new_weights[i] += w * (n / total)
+
+        weights = new_weights
+
+    model.set_weights(weights)
+    return model
+    

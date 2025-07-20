@@ -13,4 +13,4 @@ module load Python/3.8
 source ~/venv/bin/activate
 
 # One server and three clients share GPUs
-srun python src/runner.py --role=$( [ $SLURM_PROCID -eq 0 ] && echo server || echo client )
+srun python src/experiment_runner.py --role=$( [ $SLURM_PROCID -eq 0 ] && echo server || echo client )
