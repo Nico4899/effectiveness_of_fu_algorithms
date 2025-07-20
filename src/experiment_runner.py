@@ -56,11 +56,25 @@ def federated_train(
 
 
 def membership_attack_scores(
+    model: tf.keras.Model,
     model_update: List[np.ndarray],
     positive_data: Tuple[np.ndarray, np.ndarray],
     negative_data: Tuple[np.ndarray, np.ndarray],
 ) -> Tuple[List[float], List[int]]:
-    """Compute membership inference scores for a small sample."""
+    """Compute membership inference scores for a small sample.
+
+    Parameters
+    ----------
+    model:
+        The trained model prior to applying the update. Gradients are
+        computed with respect to this model.
+    model_update:
+        Weights update applied to ``model`` during unlearning.
+    positive_data, negative_data:
+        Tuples of input arrays and labels representing members and
+        non-members.
+    """
+
     x_pos, _ = positive_data
     x_neg, _ = negative_data
 
@@ -68,13 +82,13 @@ def membership_attack_scores(
     labels = []
 
     for x in x_pos[:10]:
-        grad = compute_gradient_sum(create_model(), x)
+        grad = compute_gradient_sum(model, x)
         score = norm_difference(model_update, grad)
         scores.append(score)
         labels.append(1)
 
     for x in x_neg[:10]:
-        grad = compute_gradient_sum(create_model(), x)
+        grad = compute_gradient_sum(model, x)
         score = norm_difference(model_update, grad)
         scores.append(score)
         labels.append(0)
@@ -116,7 +130,13 @@ def run_trial(
     acc_after = float(model.evaluate(X_test, y_test, verbose=0)[1])
 
     update = [nw - bw for nw, bw in zip(after_weights, before_weights)]
-    scores, labels = membership_attack_scores(update, partitions[0], partitions[1])
+    # Build a model with the pre-unlearning weights for gradient computation
+    attack_model = create_model()
+    attack_model.set_weights(before_weights)
+    scores, labels = membership_attack_scores(
+        attack_model, update, partitions[0], partitions[1]
+    )
+
     asp, tpr, auc, _ = evaluate_attack(scores, labels)
 
     return {

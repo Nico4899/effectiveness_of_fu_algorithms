@@ -11,7 +11,6 @@ from typing import Iterable, List, Tuple
 
 import numpy as np
 import tensorflow as tf
-import flwr as fl
 
 from model import create_model
 
