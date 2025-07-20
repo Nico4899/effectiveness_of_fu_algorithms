@@ -227,7 +227,7 @@ def experiment2(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run federated unlearning experiments")
-    parser.add_argument("data", help="Path to texas100_subset.npz")
+    parser.add_argument("--data", default="data/texas100_subset.npz", help="Path to texas100_subset.npz")
     parser.add_argument("--exp", choices=["system", "algorithm"], default="system")
     parser.add_argument("--output", default="logs/results.csv", help="CSV file to append metrics")
     args = parser.parse_args()

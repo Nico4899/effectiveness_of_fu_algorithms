@@ -12,5 +12,7 @@ module load devel/python/3.11.7-gnu-11.4
 source ~/venv/bin/activate
 
 # Launch 1 server (PROCID=0) and 10 clients
-srun --ntasks=11 python src/experiment_runner.py --role=$( [ $SLURM_PROCID -eq 0 ] && echo server || echo client )
+srun --ntasks=11 python src/run_federated.py \
+    --role=$( [ $SLURM_PROCID -eq 0 ] && echo server || echo client ) \
+    --cid $SLURM_PROCID
 
