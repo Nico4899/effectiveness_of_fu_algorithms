@@ -19,13 +19,28 @@ DEFAULT_OUTPUT = "data/texas100_subset.npz"
 
 
 def main(args: argparse.Namespace) -> None:
+    """Load the full Texas-100 dataset, sample 30,000 records, split into
+    train-test and store the result in an .npz file.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        CLI arguments parsed by argparse.  The following arguments are
+        required:
+
+        - ``root_dir``: Where the Texas-100 dataset is stored/downloaded.
+        - ``output``: Destination .npz file for the subset split.
+        - ``seed``: Random seed for sampling and splitting.
+    """
     X, y = load_texas100(root_dir=args.root_dir, download=True)
     X_sub, y_sub = sample_records(X, y, n_samples=30_000, seed=args.seed)
     X_train, X_test, y_train, y_test = split_train_test(
         X_sub, y_sub, test_size=0.2, seed=args.seed
     )
 
+    # Create the output directory if it doesn't exist yet
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
+    # Store the split arrays in an .npz file
     np.savez(
         args.output,
         X_train=X_train,

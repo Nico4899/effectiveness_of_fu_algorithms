@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Tuple
+from typing import Iterable, List
 
 import numpy as np
 import tensorflow as tf
@@ -11,7 +11,7 @@ from utils import flatten_weights
 
 
 def compute_gradient_sum(model: tf.keras.Model, x: np.ndarray, num_classes: int = 100) -> List[np.ndarray]:
-    r"""Compute ``\sum_a \nabla_W L(a, x)`` across all labels.
+    """Compute ``\sum_a \nabla_W L(a, x)`` across all labels.
 
     Parameters
     ----------

@@ -27,12 +27,27 @@ class LoggingFedAvg(fl.server.strategy.FedAvg):
         results: list[Tuple[fl.server.client_proxy.ClientProxy, fl.common.FitRes]],
         failures: list[Tuple[fl.server.client_proxy.ClientProxy, fl.common.FitRes]] | List[BaseException],
     ) -> Tuple[fl.common.Parameters | None, dict]:
+        """
+        Aggregate client updates and log each client's update before aggregation.
+
+        Args:
+            server_round (int): The current round number.
+            results (list[Tuple[fl.server.client_proxy.ClientProxy, fl.common.FitRes]]):
+                The results of the clients' local training.
+            failures (list[Tuple[fl.server.client_proxy.ClientProxy, fl.common.FitRes]] | List[BaseException]):
+                The failures that occurred during the training.
+
+        Returns:
+            tuple[fl.common.Parameters | None, dict]:
+                The aggregated parameters and the aggregated metrics.
+        """
         # Log each client's update before aggregation
         if self._current_weights is not None:
             for proxy, fit_res in results:
                 cid = fit_res.metrics.get("cid", "unknown")
                 weights_nd = parameters_to_ndarrays(fit_res.parameters)
                 update = [nw - ow for nw, ow in zip(weights_nd, self._current_weights)]
+                # Save the update with the client id and server round number
                 fname = f"round{server_round:03d}_client{cid}.npz"
                 path = os.path.join(self.log_dir, fname)
                 np.savez_compressed(path, *update)

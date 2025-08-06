@@ -8,7 +8,7 @@ from logging_strategy import LoggingFedAvg
 
 
 def evaluate_fn_factory(x_test: np.ndarray, y_test: np.ndarray):
-    def evaluate(server_round: int, parameters, config):
+    def evaluate(server_round: int, parameters):
         model = create_model()
         model.set_weights(parameters)
         loss, acc = model.evaluate(x_test, y_test, verbose=0)
@@ -25,9 +25,20 @@ def fit_config(server_round: int):
     return {"server_round": server_round}
 
 
-def start_server(address: str, log_dir: str = "logs/updates"):
+def start_server(
+    address: str, log_dir: str = "logs/updates"
+) -> None:
+    """Start a Flower server that trains a model on the Texas-100 client dataset.
+
+    Args:
+        address (str): The Flower server address (in the format "host:port").
+        log_dir (str): The directory to store client updates. Defaults to "logs/updates".
+    """
+    # Load the test dataset for evaluation
     data = np.load(os.path.join("data", "texas100_subset.npz"))
     evaluate_fn = evaluate_fn_factory(data["X_test"], data["y_test"])
+
+    # Define the Flower strategy
     strategy = LoggingFedAvg(
         log_dir=log_dir,
         fraction_fit=1.0,
@@ -38,10 +49,26 @@ def start_server(address: str, log_dir: str = "logs/updates"):
         on_fit_config_fn=fit_config,
         evaluate_fn=evaluate_fn,
     )
-    fl.server.start_server(server_address=address, config={"num_rounds": 100}, strategy=strategy)
+
+    # Start the Flower server
+    fl.server.start_server(
+        server_address=address,
+        config={"num_rounds": 100},
+        strategy=strategy,
+    )
 
 
-def start_client(address: str, cid: int, data_dir: str):
+def start_client(address: str, cid: int, data_dir: str) -> None:
+    """Start a Flower client that trains a model on the Texas-100 client dataset.
+
+    Args:
+        address (str): The Flower server address (in the format "host:port").
+        cid (int): The client id.
+        data_dir (str): The directory containing the client dataset.
+
+    Returns:
+        None
+    """
     client = TexasClient(cid, data_dir=data_dir)
     fl.client.start_numpy_client(server_address=address, client=client)
 

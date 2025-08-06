@@ -1,31 +1,31 @@
-import os
 import sys
 import numpy as np
-import tensorflow as tf
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
-
 import types
 
 # Provide a dummy 'flwr' module so importing experiment_runner does not fail
 sys.modules.setdefault("flwr", types.ModuleType("flwr"))
 
-import membership_attack
-from experiment_runner import membership_attack_scores
-from model import create_model
+from src import membership_attack
+from src.experiment_runner import membership_attack_scores
+from src.model import create_model
 
 
 def test_membership_attack_uses_provided_model(monkeypatch):
     seen = []
 
-    def fake_compute_gradient_sum(model, x, num_classes=100):
+    def fake_compute_gradient_sum(model):
+        """Fake implementation of compute_gradient_sum for unit tests
+        
+        This implementation records the passed model in the list 'seen' and
+        returns zero gradients with the same shapes as the model's weights.
+        """
         seen.append(model)
         # return zeros with correct shapes
         return [np.zeros_like(w.numpy()) for w in model.trainable_variables]
 
     monkeypatch.setattr(membership_attack, "compute_gradient_sum", fake_compute_gradient_sum)
     # ensure experiment_runner uses the patched version as well
-    import experiment_runner
+    from src import experiment_runner
     monkeypatch.setattr(experiment_runner, "compute_gradient_sum", fake_compute_gradient_sum)
 
     model = create_model()
